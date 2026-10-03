@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bercuti di Pantai - Kembara Pantai & Side Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@600;700;800&display=swap');
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(180deg, #38bdf8 0%, #7dd3fc 35%, #fef08a 70%, #fde047 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .font-fredoka { font-family: 'Fredoka', cursive; }
+
+        /* Animated Clouds */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 50px;
+            animation: moveClouds 25s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+u
+        @keyframes moveClouds {
+            0% { transform: translateX(-150px); }
+            100% { transform: translateX(100vw); }
+        }
+
+        /* Floating Animation */
+        .floating {
+            animation: float 3.5s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(3deg); }
+        }
+
+        /* Character Animations for Side Game */
+        .char-jump {
+            animation: jumpHappy 0.6s ease-in-out;
+        }
+        @keyframes jumpHappy {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-28px) scale(1.2) rotate(6deg); }
+        }
+
+        .char-fall {
+            animation: fallAduh 0.8s ease-in-out;
+        }
+        @keyframes fallAduh {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(-20deg); }
+            60% { transform: translateY(20px) rotate(80deg) scale(0.9); }
+            100% { transform: translateY(0) rotate(0deg) scale(1); }
+        }
+
+        /* Screen Shake on Incorrect Answer */
+        .shake-screen {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+
+        /* Water Splash Effect CSS */
+        .splash-ring {
+            position: absolute;
+            width: 40px;
+            height: 15px;
+            border: 3px solid #0284c7;
+            border-radius: 50%;
+            animation: splashAnim 0.6s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes splashAnim {
+            0% { transform: scale(0.2); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        .card-bounce {
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card-bounce:hover {
+            transform: translateY(-5px) scale(1.02);
+        }
+
+        /* Print Layout Styles for Certificate */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #certificatePrintArea, #certificatePrintArea * {
+                visibility: visible;
+            }
+            #certificatePrintArea {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 20px;
+                background: white !important;
+                box-shadow: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800 p-2 sm:p-4">
+
+    <!-- Background Animated Clouds -->
+    <div class="cloud w-32 h-10 top-6 left-[-100px]" style="animation-delay: 0s;"></div>
+    <div class="cloud w-48 h-12 top-16 left-[-150px]" style="animation-delay: 8s;"></div>
+
+    <!-- Main Header -->
+    <header class="relative z-10 w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-xl mb-3 flex flex-wrap justify-between items-center gap-3 border-4 border-amber-300">
+        <div class="flex items-center gap-3">
+            <div class="bg-amber-400 p-2.5 sm:p-3 rounded-2xl text-white text-2xl sm:text-3xl shadow-inner floating">
+                🏖️
+            </div>
+            <div>
+                <h1 class="text-lg sm:text-2xl font-bold font-fredoka text-sky-800 leading-tight">Bercuti di Pantai</h1>
+                <p class="text-xs sm:text-sm text-amber-700 font-semibold">Side Game: Kembara Ke Perkelahan Keluarga</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Ambient Beach Sound Toggle Button -->
+            <button id="btnBeachSound" onclick="toggleBeachAmbient()" class="bg-sky-100 hover:bg-sky-200 text-sky-700 px-3 py-2 rounded-xl border border-sky-300 text-xs sm:text-sm font-bold flex items-center gap-2 transition" title="Pasang/Tutup bunyi ombak">
+                <i id="beachSoundIcon" class="fa-solid fa-volume-xmark text-base"></i>
+                <span class="hidden sm:inline">Ombak</span>
+            </button>
+
+            <!-- Mode Switch Button -->
+            <button onclick="showModeSelect()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl border border-amber-300 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition" title="Tukar Mod Kemahiran">
+                <i class="fa-solid fa-list-check"></i>
+                <span class="hidden sm:inline">Tukar Mod</span>
+            </button>
+
+            <!-- Score & Star Badges -->
+            <div class="flex items-center gap-3 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                <div class="flex items-center gap-1 text-amber-500 font-bold text-sm sm:text-base">
+                    <i class="fa-solid fa-star text-amber-400 text-lg drop-shadow"></i>
+                    <span id="starCount">0</span>
+                </div>
+                <div class="h-4 w-px bg-amber-200"></div>
+                <div class="text-slate-700 font-bold text-xs sm:text-sm">
+                    Skor: <span id="scoreCount" class="text-sky-600">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="mainContainer" class="relative z-10 w-full max-w-4xl mx-auto flex-1 flex flex-col justify-center">
+
+        <!-- MODE SELECTION SCREEN -->
+        <div id="screenModeSelect" class="bg-white/95 backdrop-blur rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-amber-300 text-center mb-3">
+            <div class="text-5xl sm:text-6xl mb-3 floating">🏖️🏖️</div>
+            <h2 class="text-2xl sm:text-3xl font-bold font-fredoka text-sky-900 mb-2">Pilih Mod Kemahiran</h2>
+            <p class="text-slate-600 mb-6 text-sm sm:text-base font-semibold">Sila pilih fokus kemahiran Bahasa Melayu yang ingin dilatih hari ini:</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                <!-- Mode 1: Mendengar Only -->
+                <button onclick="selectGameMode('listening')" class="card-bounce bg-gradient-to-b from-sky-50 to-sky-100 hover:from-sky-100 hover:to-sky-200 border-3 border-sky-400 p-5 rounded-2xl shadow-lg text-center flex flex-col items-center justify-between transition group">
+                    <div class="w-16 h-16 bg-sky-500 text-white rounded-full flex items-center justify-center text-3xl shadow-md mb-3 group-hover:scale-110 transition-transform">
+                        🎧
+                    </div>
+                    <div>
+                        <h3 class="font-fredoka text-lg font-bold text-sky-900 mb-1">Kemahiran Mendengar</h3>
+                        <p class="text-xs text-sky-700 font-medium">Dengar petunjuk audio percutian & pilih gambar yang tepat.</p>
+                    </div>
+                    <span class="mt-4 inline-block bg-sky-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow">Mula Mod Mendengar</span>
+                </button>
+
+                <!-- Mode 2: Bertutur Only -->
+                <button onclick="selectGameMode('speaking')" class="card-bounce bg-gradient-to-b from-amber-50 to-amber-100 hover:from-amber-100 hover:to-amber-200 border-3 border-amber-400 p-5 rounded-2xl shadow-lg text-center flex flex-col items-center justify-between transition group">
+                    <div class="w-16 h-16 bg-amber-500 text-white rounded-full flex items-center justify-center text-3xl shadow-md mb-3 group-hover:scale-110 transition-transform">
+                        🗣️
+                    </div>
+                    <div>
+                        <h3 class="font-fredoka text-lg font-bold text-amber-900 mb-1">Kemahiran Bertutur</h3>
+                        <p class="text-xs text-amber-800 font-medium">Sebut frasa & aktiviti pantai guna mikrofon secara jelas.</p>
+                    </div>
+                    <span class="mt-4 inline-block bg-amber-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow">Mula Mod Bertutur</span>
+                </button>
+
+                <!-- Mode 3: Mixed Both -->
+                <button onclick="selectGameMode('mixed')" class="card-bounce bg-gradient-to-b from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 border-3 border-emerald-400 p-5 rounded-2xl shadow-lg text-center flex flex-col items-center justify-between transition group">
+                    <div class="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center text-3xl shadow-md mb-3 group-hover:scale-110 transition-transform">
+                        🔀
+                    </div>
+                    <div>
+                        <h3 class="font-fredoka text-lg font-bold text-emerald-900 mb-1">Mod Campuran</h3>
+                        <p class="text-xs text-emerald-800 font-medium">Cabaran gabungan kemahiran Mendengar & Bertutur.</p>
+                    </div>
+                    <span class="mt-4 inline-block bg-emerald-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow">Mula Mod Campuran</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SIDE GAME & QUESTION AREA (Hidden initially) -->
+        <div id="gamePlayArea" class="hidden">
+            <!-- SIDE GAME: BEACH RUNNER BOARDWALK TRAIL -->
+            <div class="bg-sky-500/20 backdrop-blur-md rounded-3xl p-3 sm:p-5 shadow-2xl border-4 border-amber-300 mb-3 relative overflow-hidden">
+                
+                <!-- Progress Header Info -->
+                <div class="flex justify-between items-center mb-2 px-2">
+                    <span id="modeTitleBadge" class="text-xs font-bold uppercase tracking-wider text-sky-900 bg-white/80 px-3 py-1 rounded-full shadow-sm">
+                        🚩 Kemahiran Mendengar
+                    </span>
+                    <span id="boardStepText" class="text-xs sm:text-sm font-black text-amber-900 bg-amber-200 px-3 py-1 rounded-full border border-amber-300">
+                        Langkah: 1 / 6
+                    </span>
+                </div>
+
+                <!-- Boardwalk Trail Grid & Character Stage -->
+                <div class="relative bg-gradient-to-r from-sky-300 via-blue-400 to-amber-200 rounded-2xl p-4 shadow-inner border-2 border-sky-400 min-h-[150px] flex items-center overflow-x-auto">
+                    
+                    <!-- Sea Water Layer Background -->
+                    <div class="absolute inset-0 bg-blue-500/10 pointer-events-none"></div>
+
+                    <!-- Path Steps Container -->
+                    <div class="flex justify-between items-center w-full min-w-[650px] relative z-10 px-2" id="boardStepsContainer">
+                        <!-- Dynamic Tiles Generated via JS -->
+                    </div>
+                </div>
+                
+                <!-- Overall Progress Bar -->
+                <div class="w-full bg-white/60 rounded-full h-3 mt-3 p-0.5 border border-sky-300">
+                    <div id="gameProgressBar" class="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full transition-all duration-500 w-[12%]"></div>
+                </div>
+            </div>
+
+            <!-- QUESTION & INTERACTION PANEL -->
+            <div id="screenQuestionPanel" class="bg-white/95 backdrop-blur rounded-3xl p-4 sm:p-6 shadow-2xl border-4 border-amber-300">
+                
+                <div class="flex justify-between items-center mb-3">
+                    <span id="qTypeBadge" class="text-xs font-bold uppercase px-3 py-1 bg-sky-100 text-sky-800 rounded-full border border-sky-200">
+                        🎧 Mod Mendengar
+                    </span>
+                    <span class="text-xs font-bold text-slate-500">
+                        Soalan <span id="currentStepNum">1</span> daripada <span id="totalStepNum">6</span>
+                    </span>
+                </div>
+
+                <!-- Question Instruction Header -->
+                <div class="bg-gradient-to-r from-amber-50 via-sky-50 to-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-center mb-4 shadow-inner">
+                    <p id="qInstruction" class="text-sm sm:text-base font-bold text-slate-700 mb-2">Dengar petunjuk audio pantai di bawah:</p>
+                    
+                    <!-- Listening Question Controls -->
+                    <div id="listeningControl" class="my-2">
+                        <button id="btnPlayAudio" onclick="playQuestionAudio()" class="card-bounce bg-sky-500 hover:bg-sky-600 text-white font-bold py-2.5 px-6 rounded-full shadow-md flex items-center justify-center gap-2 mx-auto text-sm sm:text-base border-2 border-sky-200">
+                            <i class="fa-solid fa-volume-high text-lg"></i>
+                            <span>Dengar Petunjuk Audio</span>
+                        </button>
+                    </div>
+
+                    <!-- Speaking Question Display -->
+                    <div id="speakingControl" class="hidden my-2">
+                        <div id="speakEmojiDisplay" class="text-5xl mb-2 floating">🏰</div>
+                        <div class="bg-white p-3 rounded-xl border border-amber-300 shadow-sm max-w-md mx-auto mb-2">
+                            <p id="targetSpeechPhrase" class="text-lg sm:text-xl font-fredoka text-amber-900 font-bold">
+                                "Saya membina istana pasir."
+                            </p>
+                        </div>
+                        <button onclick="playTargetSpeechExample()" class="text-xs text-sky-700 hover:underline font-bold inline-flex items-center gap-1">
+                            <i class="fa-solid fa-volume-high"></i> Dengar Contoh Sebutan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Listening Multiple Choice Grid -->
+                <div id="listeningChoicesGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Choices Rendered via JS -->
+                </div>
+
+                <!-- Speaking Microphone Interactive Panel -->
+                <div id="speakingMicArea" class="hidden text-center py-2">
+                    <button id="btnStartRec" onclick="toggleSpeechRecognition()" class="w-16 h-16 sm:w-20 sm:h-20 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-xl transition-all relative border-4 border-rose-200">
+                        <i id="micIcon" class="fa-solid fa-microphone"></i>
+                    </button>
+                    <p id="micStatusText" class="text-xs sm:text-sm font-bold text-slate-700 mt-2">Tekan mikrofon & bercakap</p>
+                    
+                    <!-- Fallback Button for speech simulation -->
+                    <button onclick="simulateSpeechResult()" class="mt-2 text-xs font-bold text-amber-700 hover:text-amber-900 underline block mx-auto">
+                        (Klik Sini Untuk Simulasi Sebutan Betul / Tanpa Mikrofon)
+                    </button>
+
+                    <div id="recognizedResult" class="mt-3 text-xs sm:text-sm italic font-semibold text-sky-800 bg-sky-50 px-3 py-1.5 rounded-xl max-w-md mx-auto hidden border border-sky-300">
+                        Pengesanan Suara: "<span id="speechTextOutput">...</span>"
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINAL COMPLETION SCREEN -->
+        <div id="screenResult" class="hidden bg-white/95 backdrop-blur rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-amber-300 text-center">
+            <div class="text-7xl mb-3 floating">🏝️⛺🎉</div>
+            <h2 class="text-2xl sm:text-3xl font-bold font-fredoka text-sky-900 mb-2">Tahniah! Sampai di Kem Perkelahan Pantai!</h2>
+            <p class="text-slate-600 mb-4 text-sm sm:text-base font-semibold">Anda berjaya menyelesaikan latihan kemahiran ini dengan cemerlang!</p>
+
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 max-w-sm mx-auto mb-4 shadow-md">
+                <div class="text-amber-400 text-4xl mb-2 flex justify-center gap-2 drop-shadow" id="resultStars">
+                    <!-- Stars via JS -->
+                </div>
+                <p class="text-slate-700 font-bold text-base mt-1">Jumlah Skor Akhir: <span id="finalScore" class="text-sky-600 text-3xl font-black">0</span></p>
+            </div>
+
+            <!-- Name Input Area for Certificate -->
+            <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-4 max-w-sm mx-auto mb-6 text-left shadow-sm">
+                <label for="studentNameInput" class="block text-xs font-bold text-sky-900 mb-1">
+                    <i class="fa-solid fa-user-graduate mr-1 text-sky-600"></i> Masukkan Nama Murid Untuk Sijil:
+                </label>
+                <input type="text" id="studentNameInput" placeholder="Contoh: Ahmad Ziyad bin Amran" class="w-full px-3 py-2 rounded-xl border border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold text-slate-800 text-sm mb-3">
+                <button onclick="generateCertificate()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg transition text-sm flex items-center justify-center gap-2 border border-amber-300">
+                    <i class="fa-solid fa-award text-base"></i>
+                    <span>Jana & Lihat Sijil Pengiktirafan</span>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-3">
+                <button onclick="restartCurrentMode()" class="card-bounce bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg border-2 border-sky-300 inline-flex items-center gap-2 text-sm sm:text-base">
+                    <i class="fa-solid fa-rotate-right"></i> Main Semula Mod Ini
+                </button>
+                <button onclick="showModeSelect()" class="card-bounce bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg border-2 border-amber-300 inline-flex items-center gap-2 text-sm sm:text-base">
+                    <i class="fa-solid fa-list-check"></i> Pilih Mod Lain
+                </button>
+            </div>
+        </div>
+
+        <!-- CERTIFICATE MODAL DISPLAY -->
+        <div id="screenCertificateModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm p-4 overflow-y-auto flex items-center justify-center">
+            <div class="relative w-full max-w-3xl bg-white rounded-3xl p-2 sm:p-6 shadow-2xl my-auto">
+                
+                <!-- Action Buttons (Hidden during printing) -->
+                <div class="no-print flex justify-between items-center mb-4 px-2">
+                    <button
